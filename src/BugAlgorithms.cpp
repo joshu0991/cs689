@@ -1,5 +1,7 @@
 #include "BugAlgorithms.hpp"
 
+#include <complex>
+
 BugAlgorithms::BugAlgorithms(Simulator * const simulator)
 {
     m_simulator = simulator;   
@@ -67,9 +69,12 @@ Move BugAlgorithms::Bug0(Sensor sensor)
         }
     }
 
+    // vector length
+    double vectorLength = std::sqrt((headingVector.first * headingVector.first) + 
+                                    (headingVector.second * headingVector.second));
     // calculate the move. \TODO We should probably unit vector these
-    move.m_dx = step * headingVector.first;
-    move.m_dy = step * headingVector.second;
+    move.m_dx = step * (headingVector.first / vectorLength);
+    move.m_dy = step * (headingVector.second / vectorLength);
 
     return move;
 }
