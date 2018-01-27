@@ -1,6 +1,7 @@
 #include "BugAlgorithms.hpp"
 
 #include <complex>
+#include <iostream>
 
 BugAlgorithms::BugAlgorithms(Simulator * const simulator)
 {
@@ -29,6 +30,7 @@ Move BugAlgorithms::Bug0(Sensor sensor)
     // wall following checks 
     if (m_mode != AROUND)
     {
+std::cout<< "Not Wall folliowing" << std::endl;
         // should we enter wall following
         if (timeToTurn(sensor))
         {
@@ -52,6 +54,7 @@ Move BugAlgorithms::Bug0(Sensor sensor)
     }
     else if (m_mode == AROUND)
     {
+std::cout<< "WWall folliowing" << std::endl;
         // we must check to see if we can go to the goal if not
         // we continue wall following
         if (goalObstructed(sensor))
@@ -185,6 +188,28 @@ void BugAlgorithms::perpendicularToHit(Sensor p_sensor, std::pair< double, doubl
 
 bool BugAlgorithms::goalObstructed(Sensor p_sensor) const
 {
-    return true;
+    // Calculates the vector from the current position to the obsticle
+
+    // get the robots coordinates
+    double robotX = m_simulator->GetRobotCenterX();
+    double robotY = m_simulator->GetRobotCenterY();
+  
+    // get the obsticle points closest to us
+    double obX = p_sensor.m_xmin;
+    double obY = p_sensor.m_ymin;
+
+    // calculate the vector that collides with this point
+    double vectorX = obX - robotX;
+    double vectorY = obY - robotY;
+
+    // Calculates the vector from the current position to the goal
+
+    std::pair< double, double > headingVector;
+    calculateHeadingToGoal(headingVector);
+    
+    double dotProduct = ( vectorX * headingVector.first ) + ( vectorY * headingVector.second );
+    double vectorMagnitude = std::sqrt( ( vectorX * vectorX ) + ( vectorY * vectorY ) );
+    double vectorProjection = dotProduct / vectorMagnitude;
+    return vectorProjection < 0 ? false : true;
 }
         
