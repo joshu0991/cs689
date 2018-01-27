@@ -72,7 +72,7 @@ Move BugAlgorithms::Bug0(Sensor sensor)
     // vector length
     double vectorLength = std::sqrt((headingVector.first * headingVector.first) + 
                                     (headingVector.second * headingVector.second));
-    // calculate the move. \TODO We should probably unit vector these
+    // calculate the move. 
     move.m_dx = step * (headingVector.first / vectorLength);
     move.m_dy = step * (headingVector.second / vectorLength);
 
@@ -185,5 +185,6 @@ void BugAlgorithms::perpendicularToHit(Sensor p_sensor, std::pair< double, doubl
 
 bool BugAlgorithms::goalObstructed(Sensor p_sensor) const
 {
+    return true;
 }
         
