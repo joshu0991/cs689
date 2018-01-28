@@ -8,6 +8,7 @@
 
 #include "Simulator.hpp"
 
+#include <cstdint>
 // for std::pair
 #include <utility>
 
@@ -96,11 +97,43 @@ public:
      */
     bool goalObstructed(Sensor p_sensor) const;
 
+    /*!
+     * Given a sensor reading calculate the distance the point is from the goal
+     * \param[in] p_sensor the sensor reading to calculate
+     * \return the distance from the sensor point to the goal
+     */
+    double calculateDistanceToGoal(Sensor p_sensor) const;
+
+    /*!
+     *  Given a vector represented by a pair make it a unit vector
+     *  \param[in, out] p_headingVector the vector to make a unit vector
+     *                  the unit vector is contained in the same pair
+     */
+     void makeUnitVector(std::pair< double, double >& p_headingVector) const;
+
+    /*!
+     * Check if a point is close to the line created from the robot start point
+     * to the goal
+     * \param[in] p_x the x coordinate to check
+     * \param[in] p_y the y coordinate to check
+     * \return true iff the point given by p_x, p_y is close to the line created
+     *         by the robot start point and goal point
+     */
+    bool checkPointOnLine(double p_x, double p_y) const;
+
 protected:
     /**
      *@brief Pointer to simulator
      */
     Simulator  *m_simulator;
+    
+    /*!
+     * \brief tracks the closest point from the obsticle to the goal
+     */
+    std::pair<double, double> m_closest;
+    
+    //! the closest distance we have seen from the obsticle to the goal
+    double m_dclosest;
 
     enum Mode
 	{
@@ -114,6 +147,11 @@ protected:
     double m_hit[2], m_leave[2], m_distLeaveToGoal;
     int    m_mode;
     
+    //! counter to track how many moves we are away from the hit point
+    std::uint16_t m_distanceTracker;
+
+    //! true if we have seen the hit point after a revolution
+    bool m_haveHitPoint;
 
     friend class Graphics;
 };
