@@ -121,6 +121,15 @@ public:
      */
     bool checkPointOnLine(double p_x, double p_y) const;
 
+    /*!
+     * Check if the the first point is closer to the goal than the second
+     * \return true iff the first point is closer to the goal than the second.
+     */
+    bool closer(double p_x1, double p_y1, double p_x2, double p_y2) const;
+
+    //! Set the distance to goal variable
+    void setDistToGoal();
+
 protected:
     /**
      *@brief Pointer to simulator
@@ -131,6 +140,13 @@ protected:
      * \brief tracks the closest point from the obsticle to the goal
      */
     std::pair<double, double> m_closest;
+    
+    //! stores the total distance traveled to the leave point
+    //! both ways ( first == towards leavepoint second == away from leavepoint )
+    std::pair< double, double > m_distToLeavePoint;
+
+    //! The previous hit point
+    std::pair< double, double > m_lastHitPoint;
     
     //! the closest distance we have seen from the obsticle to the goal
     double m_dclosest;
@@ -145,10 +161,13 @@ protected:
 	};
 
     double m_hit[2], m_leave[2], m_distLeaveToGoal;
-    int    m_mode;
+    int m_mode;
     
     //! counter to track how many moves we are away from the hit point
-    std::uint16_t m_distanceTracker;
+    int m_distanceTracker;
+
+    // direction of wall following -1 == right 1 == left
+    int m_dirOfWallFollowing;
 
     //! true if we have seen the hit point after a revolution
     bool m_haveHitPoint;
