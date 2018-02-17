@@ -1,3 +1,0 @@
-/home/joshua/school/Project1Bug/BugCPP/CMakeFiles/edit_cache.dir
-/home/joshua/school/Project1Bug/BugCPP/CMakeFiles/rebuild_cache.dir
-/home/joshua/school/Project1Bug/BugCPP/CMakeFiles/RunBug.dir
