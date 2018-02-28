@@ -81,6 +81,8 @@ private:
      */
     bool inRange(const Point& p_point) const;
 
+    void unitVector(std::tuple< double, double, double >& p_retValues) const;
+
 protected:
     RigidBodySimulator *m_simulator;
 };

@@ -6,14 +6,18 @@
 namespace
 {
     // the step size or speed of the robot for translation
-    double s_stepTranslate = 0.006;
+    double s_stepTranslate = 0.06;
 
     // the angular speed of the robot for rotation
-    double s_stepRotate = 0.0006;
+    double s_stepRotate = 0.0009;
+
+    double s_attScale = 0.1;
+
+    double s_repScale = 4;
 
     // the max distance for which we will calculate repulsive
     // force for a given obsticle
-    double s_epsillon = 5;
+    double s_epsillon = 1.7;
 }
 
 RigidBodyPlanner::RigidBodyPlanner(RigidBodySimulator * const simulator)
@@ -33,7 +37,6 @@ RigidBodyMove RigidBodyPlanner::ConfigurationMove(void)
     std::pair< double, double > forces;
     std::tuple< double, double, double > u_qSum;
     std::tuple< double, double, double > u_qCalc;
-
     // for each "control point"/vertex calculate the net force 
     // and multiply the vector by the jacobian to put it in the workspace
     const double* verticies = m_simulator->GetRobotVertices();
@@ -63,6 +66,8 @@ RigidBodyMove RigidBodyPlanner::ConfigurationMove(void)
         forces.second = 0;
     } 
 
+    unitVector(u_qSum);
+
     // put the tuple into the correct format
     RigidBodyMove move;
 
@@ -82,9 +87,8 @@ void RigidBodyPlanner::attactive(std::pair< double, double >& p_potential,
     double goalX = m_simulator->GetGoalCenterX();
     double goalY = m_simulator->GetGoalCenterY();
 
-    //
-    p_potential.first += goalX - p_x;
-    p_potential.second += goalY - p_y;
+    p_potential.first += s_attScale * (goalX - p_x);
+    p_potential.second += s_attScale * (goalY - p_y);
 }
 
 void RigidBodyPlanner::repulsive(std::pair< double, double >& p_potential,
@@ -98,8 +102,8 @@ void RigidBodyPlanner::repulsive(std::pair< double, double >& p_potential,
 
         if (inRange(ret))
         {
-            p_potential.first += (p_x - ret.m_x);
-            p_potential.second += p_y - ret.m_y;
+            p_potential.first +=  s_repScale * (p_x - ret.m_x);
+            p_potential.second += s_repScale * (p_y - ret.m_y);
         }
     }
 
@@ -132,5 +136,15 @@ bool RigidBodyPlanner::inRange(const Point& p_point) const
 
     // check to see if the obsticle is close enough to consider
     return distance < s_epsillon ? true : false;
+}
+
+void RigidBodyPlanner::unitVector(std::tuple< double, double, double >& p_retValues) const
+{
+    double& x = std::get< 0 >(p_retValues);
+    double& y = std::get< 1 >(p_retValues);
+    double distance = sqrt((x * x) + (y * y));
+
+    x /= distance;
+    y /= distance;
 }
 

@@ -18,6 +18,7 @@ struct Point
     
 class RigidBodySimulator
 {
+friend class RigidBodyPlanner;
 public:    
     RigidBodySimulator(void);
     
