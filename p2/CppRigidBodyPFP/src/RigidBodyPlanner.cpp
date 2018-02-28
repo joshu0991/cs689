@@ -17,7 +17,7 @@ namespace
 
     // the max distance for which we will calculate repulsive
     // force for a given obsticle
-    double s_epsillon = 1.7;
+    double s_epsillon = 3;
 }
 
 RigidBodyPlanner::RigidBodyPlanner(RigidBodySimulator * const simulator)
