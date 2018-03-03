@@ -3,6 +3,9 @@
 
 #include "ManipSimulator.hpp"
 
+#include <cstdint> // std int
+#include <utility> // std pair
+
 class ManipPlanner
 {
 public:
@@ -35,7 +38,33 @@ public:
  */
     void ConfigurationMove(double allLinksDeltaTheta[]);
     
-        
+private:
+    /*!
+     *
+     *
+     */
+    void repulsive(std::int32_t p_index, std::pair< double, double >& p_force) const;
+
+    /*!
+     *
+     *
+     */
+    bool inRange(const Point& p_closestPoint) const;
+
+    /*!
+     *
+     *
+     */
+    void attractive(std::int32_t p_index, std::pair< double, double >& p_force) const; 
+
+    void setupJacobian(std::int32_t p_controlIndex, 
+                       std::vector< std::pair< double, double > >& p_jacobian) const;
+
+    void forceJacobianMult(const std::pair< double, double >& p_force, 
+                           const std::vector< std::pair< double, double > >& p_jacobianT,
+                           double p_sumUqDeltas[]) const;
+
+                           
 protected:    
     
     ManipSimulator  *m_manipSimulator;
