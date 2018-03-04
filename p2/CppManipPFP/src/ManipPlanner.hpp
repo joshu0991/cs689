@@ -64,7 +64,8 @@ private:
                            const std::vector< std::pair< double, double > >& p_jacobianT,
                            double p_sumUqDeltas[]) const;
 
-                           
+    void unitVector(double p_retSums[]) const;
+
 protected:    
     
     ManipSimulator  *m_manipSimulator;

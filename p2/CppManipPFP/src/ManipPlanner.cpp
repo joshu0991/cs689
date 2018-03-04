@@ -7,6 +7,8 @@ namespace
     // the distance for which to consider 
     // a given obsticle
     double s_epsillon = 5;
+
+    double s_scalFactor = 0.01;
 }
 
 ManipPlanner::ManipPlanner(ManipSimulator * const manipSimulator)
@@ -67,8 +69,8 @@ void ManipPlanner::repulsive(std::int32_t p_index, std::pair< double, double >& 
         {
             // if the point is close enough to the obsticle at i
             // then consider it's repulsive force in our sum
-            p_force.first += r_jX - closest.m_x;
-            p_force.second += r_jY - closest.m_y;
+            p_force.first +=  (r_jX - closest.m_x);
+            p_force.second += (r_jY - closest.m_y);
         }
     }
 }
@@ -82,10 +84,10 @@ bool ManipPlanner::inRange(const Point& p_closest) const
 
 void ManipPlanner::attractive(std::int32_t p_index, std::pair< double, double >& p_force) const
 {
-    p_force.first += m_manipSimulator->GetGoalCenterX() - 
-        m_manipSimulator->GetLinkEndX(p_index);
-    p_force.second += m_manipSimulator->GetGoalCenterY() - 
-        m_manipSimulator->GetLinkEndY(p_index);
+    p_force.first += -1 * (m_manipSimulator->GetGoalCenterX() - 
+        m_manipSimulator->GetLinkEndX(p_index));
+    p_force.second += -1 * (m_manipSimulator->GetGoalCenterY() - 
+        m_manipSimulator->GetLinkEndY(p_index));
 }
 
 void ManipPlanner::setupJacobian(std::int32_t p_indexControl, 
@@ -128,6 +130,27 @@ void ManipPlanner::forceJacobianMult(const std::pair< double, double >& p_force,
         // obtain our n by matrix sum which is stored in sumUqDeltas
         p_sumUqDeltas[counter++] += ((p_force.first * jacobianIterator->first) + 
                                      (p_force.second * jacobianIterator->second));
+    }
+    unitVector(p_sumUqDeltas);
+}
+
+void ManipPlanner::unitVector(double p_retSums[]) const
+{
+    double distance = 0;
+    for (std::int32_t iter = 0; iter < m_manipSimulator->GetNrLinks(); ++iter)
+    {
+        distance += p_retSums[iter] * p_retSums[iter];
+    }
+
+    distance = sqrt(distance);
+
+    if (distance > 0)
+    {
+    for (std::int32_t iter = 0; iter < m_manipSimulator->GetNrLinks(); ++iter)
+    {
+        p_retSums[iter] /= distance;
+        p_retSums[iter] *= s_scalFactor;
+    }
     }
 }
 
