@@ -49,7 +49,7 @@ private:
      *
      *
      */
-    bool inRange(const Point& p_closestPoint) const;
+    bool inRange(const Point& p_closestPoint, double x, double y) const;
 
     /*!
      *
@@ -64,7 +64,8 @@ private:
                            const std::vector< std::pair< double, double > >& p_jacobianT,
                            double p_sumUqDeltas[]) const;
 
-    void unitVector(double p_retSums[]) const;
+    void normalizeVector(double p_retSums[]) const;
+    void normalizeForce(std::pair< double, double >& force) const;
 
 protected:    
     

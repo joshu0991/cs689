@@ -1,6 +1,7 @@
 #include "ManipPlanner.hpp"
 
 #include <math.h>
+#include <iostream>
 
 namespace
 {
@@ -8,7 +9,8 @@ namespace
     // a given obsticle
     double s_epsillon = 5;
 
-    double s_scalFactor = 0.01;
+    double s_scalFactor_att = 1;
+    double s_scalFactor_rep = 0.05;
 }
 
 ManipPlanner::ManipPlanner(ManipSimulator * const manipSimulator)
@@ -28,7 +30,7 @@ void ManipPlanner::ConfigurationMove(double allLinksDeltaTheta[])
     
     // for modeling the jacobian
     std::vector< std::pair< double, double > > jacobianT;
-
+    
     // for each link
     for (std::int32_t iter = 0; iter < m_manipSimulator->GetNrLinks(); ++iter)
     {
@@ -38,7 +40,11 @@ void ManipPlanner::ConfigurationMove(double allLinksDeltaTheta[])
             // need attactive and repulsive forces
             attractive(iter, force);
         }
+        std::cout << iter << "attractive force x" <<force.first << "\n";
+        std::cout << iter <<"attractive force y" <<force.second << "\n";
         repulsive(iter, force);
+        std::cout << "rep force x" <<force.first << "\n";
+        std::cout << "rep force y" <<force.second << "\n";
 
         // calculate the u_j for this link and keep 
         // the running sum in allLinksDeltaTheta
@@ -60,34 +66,50 @@ void ManipPlanner::repulsive(std::int32_t p_index, std::pair< double, double >& 
     // to consider on this link (the end point of the link)
     double r_jX = m_manipSimulator->GetLinkEndX(p_index);
     double r_jY = m_manipSimulator->GetLinkEndY(p_index);
+    std::pair< double, double > rep_force;
 
+    std::cout << "I'M CALCULATING REPULSIVE\n";
     Point closest = {0, 0};
     for (std::int32_t obIter = 0; obIter < m_manipSimulator->GetNrObstacles(); ++obIter)
     {
+        std::cout << "I'M inloop\n";
         closest = m_manipSimulator->ClosestPointOnObstacle(obIter, r_jX, r_jY);
-        if (inRange(closest))
+        std::cout << "closest x " << closest.m_x << "closest y " << closest.m_y << "\n";
+        std::cout << "rj x " << r_jX << "rj y " << r_jY << "\n";
+        if (inRange(closest, r_jX, r_jY))
         {
+        std::cout << "I'M inrange\n";
             // if the point is close enough to the obsticle at i
             // then consider it's repulsive force in our sum
-            p_force.first +=  (r_jX - closest.m_x);
-            p_force.second += (r_jY - closest.m_y);
+            rep_force.first += (r_jX - closest.m_x);
+            rep_force.second += (r_jY - closest.m_y);
         }
     }
+    //this normalizes the Sum of Forces for the current point
+    normalizeForce(rep_force);
+    p_force.first += s_scalFactor_rep * rep_force.first;
+    p_force.second += s_scalFactor_rep * rep_force.second;
+
 }
 
-bool ManipPlanner::inRange(const Point& p_closest) const
+bool ManipPlanner::inRange(const Point& p_closest, double x, double y) const
 {
-    double distance = sqrt((p_closest.m_x * p_closest.m_x) + 
-                           (p_closest.m_y * p_closest.m_y));
+    double distance = (x - p_closest.m_x) *  (x - p_closest.m_x);
+    distance += (y - p_closest.m_y) *  (y - p_closest.m_y);
+    distance = sqrt(distance);
+    std::cout << "in range " << distance << "\n";
     return distance < s_epsillon ? true : false;
 }
 
 void ManipPlanner::attractive(std::int32_t p_index, std::pair< double, double >& p_force) const
 {
-    p_force.first += -1 * (m_manipSimulator->GetGoalCenterX() - 
-        m_manipSimulator->GetLinkEndX(p_index));
-    p_force.second += -1 * (m_manipSimulator->GetGoalCenterY() - 
-        m_manipSimulator->GetLinkEndY(p_index));
+    p_force.first += ((m_manipSimulator->GetGoalCenterX() - 
+        m_manipSimulator->GetLinkEndX(p_index)));
+    p_force.second += ( (m_manipSimulator->GetGoalCenterY() - 
+        m_manipSimulator->GetLinkEndY(p_index)));
+    normalizeForce(p_force);
+    p_force.first *= s_scalFactor_att;
+    p_force.second *= s_scalFactor_att;
 }
 
 void ManipPlanner::setupJacobian(std::int32_t p_indexControl, 
@@ -103,7 +125,7 @@ void ManipPlanner::setupJacobian(std::int32_t p_indexControl,
     double controlX = m_manipSimulator->GetLinkEndX(p_indexControl);
     double controlY = m_manipSimulator->GetLinkEndY(p_indexControl);
 
-    for (std::int32_t iter = 0; iter < m_manipSimulator->GetNrLinks(); ++iter)
+    for (std::int32_t iter = 0; iter <= p_indexControl; ++iter)
     {
         startX = m_manipSimulator->GetLinkStartX(iter);
         startY = m_manipSimulator->GetLinkStartY(iter);
@@ -114,7 +136,11 @@ void ManipPlanner::setupJacobian(std::int32_t p_indexControl,
         x = controlX - startX;
         y = controlY - startY;
 
-        p_jacobian.push_back(std::make_pair(y, (-1 * x)));
+        p_jacobian.push_back(std::make_pair((-1 * y), x));
+    }
+    for (std::int32_t iter = p_indexControl+1; iter < m_manipSimulator->GetNrLinks(); ++iter)
+    {
+        p_jacobian.push_back(std::make_pair(0, 0));
     }
 }
 
@@ -131,26 +157,36 @@ void ManipPlanner::forceJacobianMult(const std::pair< double, double >& p_force,
         p_sumUqDeltas[counter++] += ((p_force.first * jacobianIterator->first) + 
                                      (p_force.second * jacobianIterator->second));
     }
-    unitVector(p_sumUqDeltas);
+    normalizeVector(p_sumUqDeltas);
 }
 
-void ManipPlanner::unitVector(double p_retSums[]) const
+void ManipPlanner::normalizeVector(double p_retSums[]) const
 {
-    double distance = 0;
+    double delta = 0.1;
+    
     for (std::int32_t iter = 0; iter < m_manipSimulator->GetNrLinks(); ++iter)
     {
-        distance += p_retSums[iter] * p_retSums[iter];
-    }
-
-    distance = sqrt(distance);
-
-    if (distance > 0)
-    {
-    for (std::int32_t iter = 0; iter < m_manipSimulator->GetNrLinks(); ++iter)
-    {
-        p_retSums[iter] /= distance;
-        p_retSums[iter] *= s_scalFactor;
-    }
+        if (p_retSums[iter] > 0)
+        {
+            p_retSums[iter] = delta;
+        }
+        else
+        {
+            p_retSums[iter] = -1 * delta;
+        }
     }
 }
 
+void ManipPlanner::normalizeForce(std::pair< double, double >& force) const
+{
+    double magnitude = 0;
+    
+    magnitude = (force.first * force.first) + (force.second * force.second);
+    magnitude = sqrt(magnitude);
+
+    if (magnitude > 0)
+    {
+        force.first /= magnitude;
+        force.second /= magnitude;
+    }
+}
