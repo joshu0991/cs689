@@ -7,10 +7,10 @@ namespace
 {
     // the distance for which to consider 
     // a given obsticle
-    double s_epsillon = 5;
+    double s_epsillon = 3;
 
-    double s_scalFactor_att = 1;
-    double s_scalFactor_rep = 0.05;
+    double s_scalFactor_att = 0.005;
+    double s_scalFactor_rep = 0.9;
 }
 
 ManipPlanner::ManipPlanner(ManipSimulator * const manipSimulator)
@@ -94,10 +94,8 @@ void ManipPlanner::repulsive(std::int32_t p_index, std::pair< double, double >& 
 
 bool ManipPlanner::inRange(const Point& p_closest, double x, double y) const
 {
-    double distance = (x - p_closest.m_x) *  (x - p_closest.m_x);
-    distance += (y - p_closest.m_y) *  (y - p_closest.m_y);
-    distance = sqrt(distance);
-    std::cout << "in range " << distance << "\n";
+    double distance = sqrt(((x - p_closest.m_x) *  (x - p_closest.m_x)) +
+                           ((y - p_closest.m_y) *  (y - p_closest.m_y)));
     return distance < s_epsillon ? true : false;
 }
 
@@ -113,7 +111,7 @@ void ManipPlanner::attractive(std::int32_t p_index, std::pair< double, double >&
 }
 
 void ManipPlanner::setupJacobian(std::int32_t p_indexControl, 
-                   std::vector< std::pair< double, double > >& p_jacobian) const
+                                 std::vector< std::pair< double, double > >& p_jacobian) const
 {
     // ensure the jacobian vector is empty
     p_jacobian.clear();
@@ -138,6 +136,7 @@ void ManipPlanner::setupJacobian(std::int32_t p_indexControl,
 
         p_jacobian.push_back(std::make_pair((-1 * y), x));
     }
+
     for (std::int32_t iter = p_indexControl+1; iter < m_manipSimulator->GetNrLinks(); ++iter)
     {
         p_jacobian.push_back(std::make_pair(0, 0));
@@ -162,7 +161,7 @@ void ManipPlanner::forceJacobianMult(const std::pair< double, double >& p_force,
 
 void ManipPlanner::normalizeVector(double p_retSums[]) const
 {
-    double delta = 0.1;
+    double delta = 0.005;
     
     for (std::int32_t iter = 0; iter < m_manipSimulator->GetNrLinks(); ++iter)
     {
