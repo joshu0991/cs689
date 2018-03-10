@@ -81,10 +81,27 @@ private:
      */
     bool inRange(const Point& p_point) const;
 
+    /*!
+     * Create a unit vector from our tuple
+     *
+     * \param[out] p_retValues a tuple containing x, y and theta
+     *
+     */
     void unitVector(std::tuple< double, double, double >& p_retValues) const;
+
+    /*!
+     * Determine if the robot is stuck in the current configuration
+     *
+     * \return true iff the robot appears to be stuck
+     */
+    bool checkStuck();
 
 protected:
     RigidBodySimulator *m_simulator;
+
+    std::pair< double, double > m_lastPoint;
+
+    std::uint32_t m_stuckCounter;
 };
 
 #endif

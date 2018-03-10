@@ -3,13 +3,15 @@
 #include <cstdint>
 #include <math.h>
 
+#include <iostream>
+
 namespace
 {
     // the step size or speed of the robot for translation
     double s_stepTranslate = 0.06;
 
     // the angular speed of the robot for rotation
-    double s_stepRotate = 0.0009;
+    double s_stepRotate = 0.00009;
 
     double s_attScale = 0.1;
 
@@ -18,9 +20,16 @@ namespace
     // the max distance for which we will calculate repulsive
     // force for a given obsticle
     double s_epsillon = 3;
+
+    double s_stuckDistance = 3;
+
+    double s_stuckCount = 500;
 }
 
 RigidBodyPlanner::RigidBodyPlanner(RigidBodySimulator * const simulator)
+    : 
+    m_lastPoint(),
+    m_stuckCounter(0)
 {
     m_simulator = simulator;   
 }
@@ -37,6 +46,12 @@ RigidBodyMove RigidBodyPlanner::ConfigurationMove(void)
     std::pair< double, double > forces;
     std::tuple< double, double, double > u_qSum;
     std::tuple< double, double, double > u_qCalc;
+
+    if (checkStuck())
+    {
+//        std::cout << "--------------------- STUCK ----------------- " << std::endl;
+    }
+
     // for each "control point"/vertex calculate the net force 
     // and multiply the vector by the jacobian to put it in the workspace
     const double* verticies = m_simulator->GetRobotVertices();
@@ -58,13 +73,18 @@ RigidBodyMove RigidBodyPlanner::ConfigurationMove(void)
         std::get< 0 >(u_qSum) = std::get< 0 >(u_qSum) + std::get< 0 >(u_qCalc);
         std::get< 1 >(u_qSum) = std::get< 1 >(u_qSum) + std::get< 1 >(u_qCalc);
         std::get< 2 >(u_qSum) = std::get< 2 >(u_qSum) + std::get< 2 >(u_qCalc);
-    
+
         // these will be reused for the next calcualtion
         // note we don't need to reset the tuples since they
         // are simply overwritten
         forces.first = 0;
         forces.second = 0;
     } 
+//std::cout << "===================================" << std::endl;
+//std::cout << "vectorx: " << std::get< 0 >(u_qSum) << std::endl;
+//std::cout << "vectory: " << std::get< 1 >(u_qSum) << std::endl;
+//std::cout << "vectorT: " << std::get< 2 >(u_qSum) << std::endl;
+//std::cout << "===================================" << std::endl;
 
     unitVector(u_qSum);
 
@@ -146,5 +166,25 @@ void RigidBodyPlanner::unitVector(std::tuple< double, double, double >& p_retVal
 
     x /= distance;
     y /= distance;
+}
+
+bool RigidBodyPlanner::checkStuck() 
+{
+    double x = m_simulator->GetRobotX() - m_lastPoint.first;
+    double y = m_simulator->GetRobotY() - m_lastPoint.second;
+    
+    double distance = sqrt((x * x) + (y * y)); 
+
+    if (distance < s_stuckDistance)
+    {
+        ++m_stuckCounter;
+    }
+    else
+    {
+        m_stuckCounter = 0;
+        m_lastPoint.first = m_simulator->GetRobotX();
+        m_lastPoint.second = m_simulator->GetRobotY();
+    }
+    return m_stuckCounter > s_stuckCount ? true : false;
 }
 
