@@ -4,6 +4,8 @@
 #include <math.h>
 
 #include <iostream>
+#include <time.h>
+#include <stdlib.h>
 
 namespace
 {
@@ -23,7 +25,10 @@ namespace
 
     double s_stuckDistance = 3;
 
-    double s_stuckCount = 500;
+    double s_stuckCount = 50;
+
+    double s_stuckScale = 25;
+
 }
 
 RigidBodyPlanner::RigidBodyPlanner(RigidBodySimulator * const simulator)
@@ -32,6 +37,7 @@ RigidBodyPlanner::RigidBodyPlanner(RigidBodySimulator * const simulator)
     m_stuckCounter(0)
 {
     m_simulator = simulator;   
+    srand(time(NULL));
 }
 
 RigidBodyPlanner::~RigidBodyPlanner(void)
@@ -46,23 +52,76 @@ RigidBodyMove RigidBodyPlanner::ConfigurationMove(void)
     std::pair< double, double > forces;
     std::tuple< double, double, double > u_qSum;
     std::tuple< double, double, double > u_qCalc;
+    
+    const double* verticies = m_simulator->GetRobotVertices();
 
     if (checkStuck())
     {
-//        std::cout << "--------------------- STUCK ----------------- " << std::endl;
-    }
+        // get the goal point 
+        double goalX = m_simulator->GetGoalCenterX();
+        double goalY = m_simulator->GetGoalCenterY();
+        std::pair< double, double > goalOrthogonal;
+        double s_randScaler;
+        double s_randAngle = (1.0 *rand()) / RAND_MAX;
 
+        for (std::int32_t iter = 0; iter < m_simulator->GetNrRobotVertices(); iter+=2)
+        {
+            //generating a random number between 0 and 1
+            s_randScaler = (1.0 *rand()) / RAND_MAX;
+            
+            //if I have not ben stuck for a long time then use the vector perpandicular to the goal
+            // to get unstuck
+            if (m_stuckCounter < 100)
+            {
+        std::cout << "--------------------- STUCK ----------------- " << std::endl;
+                //calculate the vector perpandicular to the goal
+                goalOrthogonal.second = s_stuckScale * s_attScale * (goalX - verticies[iter]);
+                goalOrthogonal.first = -1 * s_stuckScale * s_attScale * (goalY - verticies[iter+1]);
+
+            }
+            //else if I have been stuck for a while and have tried the perpandicular direction and failed 
+            // then try a random rotation
+            else
+            {
+        std::cout << "--------------------- STUCK 100----------------- " << std::endl;
+                double x = goalX - verticies[iter];
+                double y = goalX - verticies[iter+1];
+
+                goalOrthogonal.first = x * cos( s_randAngle * 3.14159 ) + y * sin( s_randAngle * 3.14159 );
+                goalOrthogonal.second = y * cos( s_randAngle * 3.14159 ) + x * sin( s_randAngle * 3.14159 );
+                
+                goalOrthogonal.first = s_stuckScale * s_attScale * goalOrthogonal.first;
+                goalOrthogonal.second = s_stuckScale * s_attScale * goalOrthogonal.second;
+            }
+            
+            // calculate the jacobian transpose of this vector
+            jacobianMult(u_qCalc, goalOrthogonal, verticies[iter], verticies[iter + 1], m_simulator->GetRobotTheta());
+
+            
+            
+            // add to the running sum of u_q the u_1 value we just calculated for this control point
+            std::get< 0 >(u_qSum) = std::get< 0 >(u_qSum) + s_randScaler * std::get< 0 >(u_qCalc);
+            std::get< 1 >(u_qSum) = std::get< 1 >(u_qSum) + s_randScaler * std::get< 1 >(u_qCalc);
+            std::get< 2 >(u_qSum) = std::get< 2 >(u_qSum) + s_randScaler * std::get< 2 >(u_qCalc);
+
+
+
+        }
+
+    }
+    
     // for each "control point"/vertex calculate the net force 
     // and multiply the vector by the jacobian to put it in the workspace
-    const double* verticies = m_simulator->GetRobotVertices();
     for (std::int32_t iter = 0; iter < m_simulator->GetNrRobotVertices(); iter+=2)
     {
         // calculate the attactive force to the goal
         attactive(forces, verticies[iter], verticies[iter + 1]);
+        std::cout << "\nattractive = " << forces.first << " , "<< forces.second<<"\n";
 
         // calculate the repulsive force for all obsticles that are
         // within epsillon of this control point
         repulsive(forces, verticies[iter], verticies[iter + 1]);
+        std::cout << "\natt + rep  = " << forces.first << " , "<< forces.second<<"\n";
         
         // the repulsive and attactive forces have been summed for this control point at this point
 

@@ -49,7 +49,7 @@ private:
      *
      *
      */
-    bool inRange(const Point& p_closestPoint, double x, double y) const;
+    bool inRange(double dist) const;
 
     /*!
      *

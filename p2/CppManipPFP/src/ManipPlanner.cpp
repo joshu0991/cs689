@@ -7,10 +7,10 @@ namespace
 {
     // the distance for which to consider 
     // a given obsticle
-    double s_epsillon = 3;
+    double s_epsillon = 0.8;
 
-    double s_scalFactor_att = 0.005;
-    double s_scalFactor_rep = 0.9;
+    double s_scalFactor_att = 0.0001;
+    double s_scalFactor_rep = 0.005;
 }
 
 ManipPlanner::ManipPlanner(ManipSimulator * const manipSimulator)
@@ -30,6 +30,11 @@ void ManipPlanner::ConfigurationMove(double allLinksDeltaTheta[])
     
     // for modeling the jacobian
     std::vector< std::pair< double, double > > jacobianT;
+    for(size_t i=0;i<m_manipSimulator->GetNrLinks();++i)
+     {
+         allLinksDeltaTheta[i]=0;
+     }
+
     
     // for each link
     for (std::int32_t iter = 0; iter < m_manipSimulator->GetNrLinks(); ++iter)
@@ -40,11 +45,9 @@ void ManipPlanner::ConfigurationMove(double allLinksDeltaTheta[])
             // need attactive and repulsive forces
             attractive(iter, force);
         }
-        std::cout << iter << "attractive force x" <<force.first << "\n";
-        std::cout << iter <<"attractive force y" <<force.second << "\n";
         repulsive(iter, force);
-        std::cout << "rep force x" <<force.first << "\n";
-        std::cout << "rep force y" <<force.second << "\n";
+        std::cout << "f sum repulsive X" << iter << " = " << force.first << "\n";
+                    std::cout << "f sum repulsive Y" << iter << " = " << force.second << "\n";
 
         // calculate the u_j for this link and keep 
         // the running sum in allLinksDeltaTheta
@@ -58,6 +61,7 @@ void ManipPlanner::ConfigurationMove(double allLinksDeltaTheta[])
         force.first = 0;
         force.second = 0;
     }
+    normalizeVector(allLinksDeltaTheta);
 }
 
 void ManipPlanner::repulsive(std::int32_t p_index, std::pair< double, double >& p_force) const
@@ -66,46 +70,42 @@ void ManipPlanner::repulsive(std::int32_t p_index, std::pair< double, double >& 
     // to consider on this link (the end point of the link)
     double r_jX = m_manipSimulator->GetLinkEndX(p_index);
     double r_jY = m_manipSimulator->GetLinkEndY(p_index);
-    std::pair< double, double > rep_force;
+    //std::pair< double, double > rep_force;
+    std::pair< double, double > temp;
 
-    std::cout << "I'M CALCULATING REPULSIVE\n";
     Point closest = {0, 0};
     for (std::int32_t obIter = 0; obIter < m_manipSimulator->GetNrObstacles(); ++obIter)
     {
-        std::cout << "I'M inloop\n";
         closest = m_manipSimulator->ClosestPointOnObstacle(obIter, r_jX, r_jY);
-        std::cout << "closest x " << closest.m_x << "closest y " << closest.m_y << "\n";
-        std::cout << "rj x " << r_jX << "rj y " << r_jY << "\n";
-        if (inRange(closest, r_jX, r_jY))
+        
+        //calculating the distance from the obstacle to the point
+        double distance = sqrt(((closest.m_x - r_jX) *  (closest.m_x - r_jX)) +
+                           ((closest.m_y - r_jY) *  (closest.m_y - r_jY)));
+        if (inRange(distance))
         {
-        std::cout << "I'M inrange\n";
             // if the point is close enough to the obsticle at i
             // then consider it's repulsive force in our sum
-            rep_force.first += (r_jX - closest.m_x);
-            rep_force.second += (r_jY - closest.m_y);
+            temp.first = (closest.m_x - r_jX);
+            temp.second = (closest.m_y - r_jY);
+            normalizeForce(temp);
+            p_force.first += s_scalFactor_rep * temp.first;
+            p_force.second += s_scalFactor_rep * temp.second;
         }
     }
-    //this normalizes the Sum of Forces for the current point
-    normalizeForce(rep_force);
-    p_force.first += s_scalFactor_rep * rep_force.first;
-    p_force.second += s_scalFactor_rep * rep_force.second;
-
 }
 
-bool ManipPlanner::inRange(const Point& p_closest, double x, double y) const
+bool ManipPlanner::inRange( double distance ) const
 {
-    double distance = sqrt(((x - p_closest.m_x) *  (x - p_closest.m_x)) +
-                           ((y - p_closest.m_y) *  (y - p_closest.m_y)));
     return distance < s_epsillon ? true : false;
 }
 
 void ManipPlanner::attractive(std::int32_t p_index, std::pair< double, double >& p_force) const
 {
-    p_force.first += ((m_manipSimulator->GetGoalCenterX() - 
-        m_manipSimulator->GetLinkEndX(p_index)));
-    p_force.second += ( (m_manipSimulator->GetGoalCenterY() - 
-        m_manipSimulator->GetLinkEndY(p_index)));
-    normalizeForce(p_force);
+    p_force.first += ((m_manipSimulator->GetLinkEndX(p_index) - 
+        m_manipSimulator->GetGoalCenterX() ));
+    p_force.second += ((m_manipSimulator->GetLinkEndY(p_index) -
+       m_manipSimulator->GetGoalCenterY()));
+    //normalizeForce(p_force);
     p_force.first *= s_scalFactor_att;
     p_force.second *= s_scalFactor_att;
 }
@@ -133,7 +133,8 @@ void ManipPlanner::setupJacobian(std::int32_t p_indexControl,
         // calculate the 
         x = controlX - startX;
         y = controlY - startY;
-
+    std::cout << " x " << iter << " = " << (-1*y) << "\n";
+            std::cout << " y " << iter << " = " << x << "\n";
         p_jacobian.push_back(std::make_pair((-1 * y), x));
     }
 
@@ -153,39 +154,49 @@ void ManipPlanner::forceJacobianMult(const std::pair< double, double >& p_force,
     {
         // the element at this index is the x,y pair to multiply by the force to
         // obtain our n by matrix sum which is stored in sumUqDeltas
+        std::cout << "Ux " << counter << " = " << p_force.first << "\n";
+        std::cout << "Uy " << counter << " = " << p_force.second << "\n";
+         std::cout << " jx " << counter << " = " << jacobianIterator->first << "\n";
+         std::cout << " jy " << counter << " = " << jacobianIterator->second << "\n";
+         std::cout << " ***  = " << p_sumUqDeltas[counter] << "\n";
+
+
         p_sumUqDeltas[counter++] += ((p_force.first * jacobianIterator->first) + 
                                      (p_force.second * jacobianIterator->second));
+        std::cout << " ***  = " << p_sumUqDeltas[counter-1] << "\n";
     }
-    normalizeVector(p_sumUqDeltas);
 }
 
 void ManipPlanner::normalizeVector(double p_retSums[]) const
 {
-    double delta = 0.005;
+    //double delta = 0.005;
+    
     
     for (std::int32_t iter = 0; iter < m_manipSimulator->GetNrLinks(); ++iter)
     {
-        if (p_retSums[iter] > 0)
+       /* if (p_retSums[iter] > 0)
         {
             p_retSums[iter] = delta;
         }
         else
         {
             p_retSums[iter] = -1 * delta;
-        }
+        }*/
+        std::cout << " sum,  " << iter << " = " << p_retSums[iter] << "\n";
+        p_retSums[iter] *= -1;
     }
 }
 
 void ManipPlanner::normalizeForce(std::pair< double, double >& force) const
 {
-    double magnitude = 0;
+    double distance = 0;
     
-    magnitude = (force.first * force.first) + (force.second * force.second);
-    magnitude = sqrt(magnitude);
+    distance = (force.first * force.first) + (force.second * force.second);
+    //distance = sqrt(distance);
 
-    if (magnitude > 0)
+    if (distance > 0)
     {
-        force.first /= magnitude;
-        force.second /= magnitude;
+        force.first /= distance;
+        force.second /= distance;
     }
 }
