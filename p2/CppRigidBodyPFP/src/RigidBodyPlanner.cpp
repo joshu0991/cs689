@@ -71,17 +71,17 @@ RigidBodyMove RigidBodyPlanner::ConfigurationMove(void)
             
             //if I have not ben stuck for a long time then use the vector perpandicular to the goal
             // to get unstuck
-            if (m_stuckCounter < 100)
-            {
+            //if (m_stuckCounter < 100)
+           // {
         std::cout << "--------------------- STUCK ----------------- " << std::endl;
                 //calculate the vector perpandicular to the goal
                 goalOrthogonal.second = s_stuckScale * s_attScale * (goalX - verticies[iter]);
                 goalOrthogonal.first = -1 * s_stuckScale * s_attScale * (goalY - verticies[iter+1]);
 
-            }
+          //  }
             //else if I have been stuck for a while and have tried the perpandicular direction and failed 
             // then try a random rotation
-            else
+          /*  else
             {
         std::cout << "--------------------- STUCK 100----------------- " << std::endl;
                 double x = goalX - verticies[iter];
@@ -92,7 +92,7 @@ RigidBodyMove RigidBodyPlanner::ConfigurationMove(void)
                 
                 goalOrthogonal.first = s_stuckScale * s_attScale * goalOrthogonal.first;
                 goalOrthogonal.second = s_stuckScale * s_attScale * goalOrthogonal.second;
-            }
+            } */
             
             // calculate the jacobian transpose of this vector
             jacobianMult(u_qCalc, goalOrthogonal, verticies[iter], verticies[iter + 1], m_simulator->GetRobotTheta());
