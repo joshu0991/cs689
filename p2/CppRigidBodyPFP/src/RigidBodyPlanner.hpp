@@ -99,8 +99,10 @@ private:
 protected:
     RigidBodySimulator *m_simulator;
 
+    //! The last point to check to see if we are stuck
     std::pair< double, double > m_lastPoint;
 
+    // Counter for determining if we surpass the stuck threshold
     std::uint32_t m_stuckCounter;
 };
 
