@@ -54,8 +54,9 @@ public:
     /**
      *@brief Select the appropriate move so that the polygon behaves
      *       as described in the planer pose problem
+     *@param CW_rotation the desired rotations should be Clockwise
      */
-    Move PPPAlgorithm();
+    Move PPPAlgorithm( bool CW_rotation );
 
 
     

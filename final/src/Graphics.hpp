@@ -29,6 +29,7 @@ public:
      */
     void MainLoop(void);
     
+    bool CW_rotation;
 protected:
     /**
      *@brief Perform simulation step
@@ -40,6 +41,8 @@ protected:
      */
     void HandleEventOnDisplay(void);
     
+    void SetInitPose(void);
+    void SetGoalPose(void);
     /**
      *@brief Respond to event when left button is clicked
      *

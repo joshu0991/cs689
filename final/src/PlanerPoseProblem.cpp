@@ -21,7 +21,7 @@ PlanerPoseProblem::~PlanerPoseProblem(void)
     //do not delete m_simulator
 }
 
-Move PlanerPoseProblem::PPPAlgorithm()
+Move PlanerPoseProblem::PPPAlgorithm(bool CW_rotation)
 {
     //use M_PI for angles
     

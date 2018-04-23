@@ -20,6 +20,7 @@ Graphics::Graphics()
     // initial and goal poses are unspecified
     init_specified = false;
     goal_specified = false;
+    CW_rotation = true;
     
     m_frames = 0;
     m_exportFrames = 0;
@@ -80,7 +81,7 @@ void Graphics::HandleEventOnTimer(void)
         if(m_run && !m_simulator.HasPolygonReachedGoal())
         {
             // get the move
-            struct Move move = m_planner->PPPAlgorithm();
+            struct Move move = m_planner->PPPAlgorithm(CW_rotation);
             
             //setting the center of mass and the theta based of the new move
             m_simulator.SetCurrCOM(m_simulator.GetCurrCenterOfMass().first +
@@ -99,6 +100,59 @@ void Graphics::HandleEventOnTimer(void)
     
 }
 
+void Graphics::SetInitPose( )
+{
+    //calculating the sin and cos of theta
+    double ctheta = cos( m_simulator.triangle->init_theta);
+    double stheta = sin( m_simulator.triangle->init_theta);
+        
+    double x = 0;
+    double y = 0;
+    for(int i = 0; i < 3; ++i)
+    {
+        x = m_simulator.triangle->init_vertices[i].first - m_simulator.triangle->init_Com.first;
+        y = m_simulator.triangle->init_vertices[i].second - m_simulator.triangle->init_Com.second;
+        // using local parameters to apply the rotation then converting to global coordinates
+        // and applying translation
+        m_simulator.triangle->init_vertices[i].first = (ctheta * x) -
+                                                       (stheta * y) +
+                                                        m_simulator.triangle->init_Com.first;
+            
+        m_simulator.triangle->init_vertices[i].second = (stheta * x) +
+                                                        (ctheta * y) +
+                                                         m_simulator.triangle->init_Com.second;
+
+        m_simulator.triangle->curr_vertices[i].first =
+        m_simulator.triangle->init_vertices[i].first;
+        
+        m_simulator.triangle->curr_vertices[i].second =
+        m_simulator.triangle->init_vertices[i].second;
+    }
+}
+void Graphics::SetGoalPose( )
+{
+    //calculating the sin and cos of theta
+    double ctheta = cos( m_simulator.goal_theta);
+    double stheta = sin( m_simulator.goal_theta);
+        
+    double x = 0;
+    double y = 0;
+    for(int i = 0; i < 3; ++i)
+    {
+        x = m_simulator.goal_vertices[i].first - m_simulator.goalCenter.first;
+        y = m_simulator.goal_vertices[i].second - m_simulator.goalCenter.second;
+        // using local parameters to apply the rotation then converting to global coordinates
+        // and applying translation
+        m_simulator.goal_vertices[i].first = (ctheta * x) -
+                                             (stheta * y) +
+                                              m_simulator.goalCenter.first;
+            
+        m_simulator.goal_vertices[i].second = (stheta * x) +
+                                              (ctheta * y) +
+                                               m_simulator.goalCenter.second;
+    }
+}
+
 void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
 {
     if( init_specified == false && goal_specified == false )
@@ -107,6 +161,7 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
         m_simulator.SetCurrCOM(mouse_x,mouse_y);
         m_simulator.triangle->init_Com.first = mouse_x;
         m_simulator.triangle->init_Com.second = mouse_y;
+        m_simulator.triangle->init_theta = M_PI/2;
         
         /* set the vertices V1 = (-1,0) V2 = (2.5,0) V3 = (0,1.5)
          * using COM = (0.5,0.5)
@@ -118,36 +173,25 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
         //setting the first vertex
         m_simulator.triangle->init_vertices[0].first =
         m_simulator.triangle->init_Com.first + (-0.5);
-        m_simulator.triangle->curr_vertices[0].first =
-        m_simulator.triangle->init_vertices[0].first;
         
         m_simulator.triangle->init_vertices[0].second =
         m_simulator.triangle->init_Com.second + (1.0);
-        m_simulator.triangle->curr_vertices[0].second =
-        m_simulator.triangle->init_vertices[0].second;
         
         //setting the second vertex
         m_simulator.triangle->init_vertices[1].first =
         m_simulator.triangle->init_Com.first + (2.0);
-        m_simulator.triangle->curr_vertices[1].first =
-        m_simulator.triangle->init_vertices[1].first;
         
         m_simulator.triangle->init_vertices[1].second =
         m_simulator.triangle->init_Com.second + (-0.5);
-        m_simulator.triangle->curr_vertices[1].second =
-        m_simulator.triangle->init_vertices[1].second;
         
         //setting the third vertex
         m_simulator.triangle->init_vertices[2].first =
         m_simulator.triangle->init_Com.first + (-1.5);
-        m_simulator.triangle->curr_vertices[2].first =
-        m_simulator.triangle->init_vertices[2].first;
         
         m_simulator.triangle->init_vertices[2].second =
         m_simulator.triangle->init_Com.second + (-0.5);
-        m_simulator.triangle->curr_vertices[2].second =
-        m_simulator.triangle->init_vertices[2].second;
         
+        SetInitPose( );
         
         // set flag to refect the change
         init_specified = true;
@@ -155,7 +199,7 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
     else if( init_specified == true && goal_specified == false)
     {
         //set the goal pose center of mass
-        m_simulator.SetGoalCenter(mouse_x, mouse_y, 0);
+        m_simulator.SetGoalCenter(mouse_x, mouse_y, M_PI);
         
         //set the goal vertices
         m_simulator.goal_vertices[0].first =
@@ -178,6 +222,7 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
         m_simulator.goal_vertices[2].second =
         m_simulator.goalCenter.second + (-0.5);
         
+        SetGoalPose( );
         // set flag to refect the change
         goal_specified = true;
     }
@@ -375,7 +420,17 @@ void Graphics::ExportFrameAsImage(const char fname[])
 
 int main(int argc, char **argv)
 {
+    if( argc != 2 )
+    {
+        printf("PlanerPoseProblem <1 for CW / 0 for CCW>\n");
+        exit(0);
+    } 
+    
     Graphics graphics;
+    if( atoi(argv[1]) == 0 )
+    {
+        graphics.CW_rotation = false;
+    }
     graphics.MainLoop();
     
     return 0;
