@@ -8,12 +8,31 @@
 
 #include "Simulator.hpp"
 
-Simulator::Simulator(void) :
-    triangle(Triangle::getInstance()),
-    goal_vertices(3)
+Simulator::Simulator( )
+
 {
-    goalCenter.first  = 16;
-    goalCenter.second = -12;
+    for( int i=0 ; i < 3 ; ++i )
+    {
+//        init_triangle.vertices[i] = glm::vec2(0.0, 0.0);
+        init_triangle.vertices.push_back(glm::vec2(0.0, 0.0));
+        goal_triangle.vertices.push_back(glm::vec2(0.0, 0.0));
+        curr_triangle.vertices.push_back(glm::vec2(0.0, 0.0));
+    }
+
+    init_triangle.com = glm::vec2(0.0, 0.0);
+    goal_triangle.com = glm::vec2(0.0, 0.0);
+    curr_triangle.com = glm::vec2(0.0, 0.0);
+    e1_max_angle = glm::vec2(0.0, 0.0);
+    delta_angle = glm::vec2(0.0, 0.0);
+    step_angle = glm::vec2(0.0, 0.0);
+
+    init_triangle.theta = 0.0;
+    goal_triangle.theta = 0.0;
+    curr_triangle.theta = 0.0;
+    for( int i = 0 ; i < 6 ; ++i )
+    {
+        local_minima.push_back(0.0);
+    }
     
 }
 

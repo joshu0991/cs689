@@ -17,7 +17,7 @@ class Graphics
 {
 public:
     
-    Graphics();
+    Graphics(void);
     
     /**
      *@brief Destroy window

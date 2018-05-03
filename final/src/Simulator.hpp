@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <cmath>
+#include <glm/glm.hpp>
 
 
 /**
@@ -42,52 +43,52 @@ public:
     /**
      *@brief Determine if two points (x1, y1) and (x2, y2) are near each other
      */
-    bool ArePointsNear(std::pair<double, double> p1,
-                       std::pair<double, double> p2) const
+    bool ArePointsNear( glm::vec2 p1,
+                        glm::vec2 p2) const
     {
-        double dx = p2.first - p1.first;
-        double dy = p2.second - p1.second;
-        return (dx*dx + dy*dy < 0.2);
+
+       float magnitude = glm::length( p2 - p1 );
+       return (magnitude * magnitude < 0.2);
     }
     
     /**
      *@brief Get x-coordinate and y-coordinate of the polygon's current center of mass
      */
-    std::pair<double, double> GetCurrCenterOfMass(void) const
+    glm::vec2  GetCurrCenterOfMass(void) const
     {
-        return triangle->curr_Com;
+        return curr_triangle.com;
     }
     
     /**
      *@brief Get x-coordinate and y-coordinate of the polygon's initial center of mass
      */
-    std::pair<double, double> GetInitCenterOfMass(void) const
+    glm::vec2  GetInitCenterOfMass(void) const
     {
-        return triangle->init_Com;
+        return init_triangle.com;
     }
     
     /**
      *@brief Get x-coordinate of and y-coordinate the goal pose
      */
-    std::pair<double, double> GetGoalCenter(void) const
+    glm::vec2 GetGoalCenter(void) const
     {
-        return goalCenter;
+        return goal_triangle.com;
     }
     
     /**
      *@brief Get the orientation of the goal pose
      */
-    double GetGoaltheta(void) const
+    float GetGoaltheta(void) const
     {
-        return goal_theta;
+        return goal_triangle.theta;
     }
     
     /**
      *@brief Get the orientation of the curr pose
      */
-    double GetCurrtheta(void) const
+    float GetCurrtheta(void) const
     {
-        return triangle->curr_theta;
+        return curr_triangle.theta;
     }
     
 
@@ -97,10 +98,10 @@ public:
      */
     bool HasPolygonReachedGoal(void) const
     {
-        return (ArePointsNear(triangle->curr_Com, goalCenter) &&
-                ArePointsNear(triangle->curr_vertices[0], goal_vertices[0]) &&
-                ArePointsNear(triangle->curr_vertices[1], goal_vertices[1]) &&
-                ArePointsNear(triangle->curr_vertices[2], goal_vertices[2]) );
+        return (ArePointsNear(curr_triangle.com, goal_triangle.com) &&
+                ArePointsNear(curr_triangle.vertices[0], goal_triangle.vertices[0]) &&
+                ArePointsNear(curr_triangle.vertices[1], goal_triangle.vertices[1]) &&
+                ArePointsNear(curr_triangle.vertices[2], goal_triangle.vertices[2]) );
         
     }
     
@@ -111,12 +112,9 @@ protected:
      *@param cx x position of center
      *@param cy y position of center
      */
-    void SetCurrCOM(double cx, double cy)
+    void SetCurrCOM(float  cx, float cy)
     {
-        triangle->curr_Com.first = cx;
-        triangle->curr_Com.second = cy;
-        
-        path.push_back(triangle->curr_Com);
+        curr_triangle.com = glm::vec2( cx, cy );
     }
     
     /**
@@ -124,10 +122,9 @@ protected:
      *
      *@param theta Triangle's current orientation
      */
-    void SetCurrTheta(double theta)
+    void SetCurrTheta(float theta)
     {
-        triangle->curr_theta = theta;
-        path_theta.push_back(triangle->curr_theta);
+        curr_triangle.theta = theta;
     }
     
     /**
@@ -136,113 +133,63 @@ protected:
      *@param y y position of the goal center
      *@param theta orientation of the goal pose
      */
-    void SetGoalCenter(double x, double y,double theta )
+    void SetGoalCenter(float x, float y,float theta )
     {
-        goalCenter.first = x;
-        goalCenter.second = y;
-        goal_theta = theta;
-        
+        goal_triangle.com = glm::vec2( x, y );
+        goal_triangle.theta = theta;
     }
     
     /**
      *@brief Set the vertices of the polygon using the triangle's current
      * center of mass and theta
      */
-    void SetVertices(double dx, double dy)
+    void SetVertices(float dx, float dy)
     {
         //calculating the sin and cos of theta
-        double ctheta = cos(triangle->curr_theta);
-        double stheta = sin(triangle->curr_theta);
+        float ctheta = glm::cos(curr_triangle.theta);
+        float stheta = glm::sin(curr_triangle.theta);
         
-        double x = 0;
-        double y = 0;
+        glm::vec2 local = glm::vec2(0.0);
+        glm::mat2 R = glm::mat2( ctheta, -stheta,  //first column
+                                 stheta,  ctheta);  //second column
+
         for(int i = 0; i < 3; ++i)
         {
             //converting the vertices to local coordinates
-            x = triangle->curr_vertices[i].first - (triangle->curr_Com.first - dx);
-            y = triangle->curr_vertices[i].second - (triangle->curr_Com.second - dy);
-            
-            // using local parameters to apply the rotation then converting to global coordinates
-            // and applying translation
-            triangle->curr_vertices[i].first = (ctheta * x) -
-                                               (stheta * y) +
-                                                triangle->curr_Com.first;
-            
-            triangle->curr_vertices[i].second = (stheta * x) +
-                                                (ctheta * y) +
-                                                triangle->curr_Com.second;
+            local = curr_triangle.vertices[i] - ( curr_triangle.com - glm::vec2( dx, dy ) );
+            curr_triangle.vertices[i] = local * R + curr_triangle.com;
         }
     }
 
     
 
-    /**
-     *@brief Goal's position
-     */
-    std::pair<double, double> goalCenter;
-    
-    /**
-     *@brief Goal's orientation
-     */
-    double goal_theta;
-    
-    /**
-     *@brief Goal's vertices
-     */
-    std::vector<std::pair< double, double > > goal_vertices;
-    
-    /**
-     *@brief For storing the history of Polygon positions
-     */
-    std::vector<std::pair<double, double> > path;
-    
-    /**
-     *@brief For storing the history of Polygon's orientation
-     */
-    std::vector<double> path_theta;
-    
-    class Triangle
+ public:
+    typedef struct Triangle
     {
-    public:
-        static std::shared_ptr< Triangle > getInstance()
-        {
-            static std::shared_ptr< Triangle > instance;
-            if (instance.get() == NULL)
-            {
-                instance.reset(new Triangle);
-            }
-            return instance;
-        }
+        // Positions of the triangle's vertices
+        std::vector<glm::vec2> vertices;
+        // Center of mass of the triangle
+        glm::vec2 com;
+        // Orientation of the vertices with respect to the center of mass
+        float theta; 
 
-    private:
-        Triangle() :
-            init_vertices(3),
-            curr_vertices(3),
-            init_Com(-20, 13),
-            curr_Com(-20, 13),
-            init_theta(0),
-            curr_theta(0)
-        {
-        }
-        
-    private:
-        friend class Simulator;
-        friend class Graphics;
-        
-        // Initial and current positions of the triangle's vertices
-        std::vector<std::pair< double, double > > init_vertices;
-        std::vector<std::pair< double, double > > curr_vertices;
-        
-        // Initial and current positions of the triangle's center of mass
-        std::pair<double, double> init_Com;
-        std::pair<double, double> curr_Com;
-        
-        // the Initial and current orientation of the triangle
-        double init_theta;
-        double curr_theta;
-    };
+    }Triangle;
     
-    std::shared_ptr< Triangle > triangle;
+    //std::shared_ptr< Triangle > init_triangle;
+    Triangle init_triangle;
+    Triangle goal_triangle;
+    Triangle curr_triangle;
+
+    std::vector<float> local_minima;
+    glm::vec2 e1_max_angle;
+    glm::vec2 delta_angle;
+    glm::vec2 step_angle;
+
+    std::vector<glm::vec2> unit_reorient_CW;
+    std::vector<glm::vec2> unit_reorient_CCW;
+
+    std::vector<float> mag_reorient_CW;
+    std::vector<float> mag_reorient_CCW;
     
     friend class Graphics;
     friend class PlanerPoseProblem;

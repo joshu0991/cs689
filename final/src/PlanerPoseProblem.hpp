@@ -22,9 +22,9 @@
  */
 struct Move
 {
-    double m_dx;
-    double m_dy;
-    double m_dtheta;
+    float m_dx;
+    float m_dy;
+    float m_dtheta;
 };
 
 
@@ -50,7 +50,10 @@ public:
      */
     ~PlanerPoseProblem(void);
     
-    
+    void CalcluateRadiusFunction(void);
+    void SetTotalOrientationChange(void);
+    void SetUnitReorientPushes(void);
+
     /**
      *@brief Select the appropriate move so that the polygon behaves
      *       as described in the planer pose problem
