@@ -150,9 +150,11 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
     if( init_specified == false && goal_specified == false )
     {
         //set the init pose center of mass
-        m_simulator.SetCurrCOM(mouse_x,mouse_y);
+        //m_simulator.SetCurrCOM(mouse_x,mouse_y);
+        m_simulator.SetCurrCOM(-9,7);
         
-        m_simulator.init_triangle.com = glm::vec2( mouse_x, mouse_y );
+        //m_simulator.init_triangle.com = glm::vec2( mouse_x, mouse_y );
+        m_simulator.init_triangle.com = glm::vec2(-9,7);
        m_simulator.init_triangle.theta = 3 * M_PI/2;
         
         /* set the vertices V1 = (-1,0) V2 = (2.5,0) V3 = (0,1.5)
@@ -169,14 +171,20 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
         //setting the third vertex
         m_simulator.init_triangle.vertices[2] = m_simulator.init_triangle.com + glm::vec2( -1.5, -0.5 );
         SetInitPose( );
-        
+    /*    printf(" v0 = [  %f  %f  ] v1 = [ %f  %f  ] v2 = [ %f  %f  ]\n" ,m_simulator.init_triangle.vertices[0][0],
+                m_simulator.init_triangle.vertices[0][1], m_simulator.init_triangle.vertices[1][0], m_simulator.init_triangle.vertices[1][1],
+                m_simulator.init_triangle.vertices[2][0], m_simulator.init_triangle.vertices[2][1]);
+        printf(" com x = %f , Com y = %f \n",m_simulator.init_triangle.com[0], m_simulator.init_triangle.com[1] );
+      */  
+        m_planner->SetEdgeVectors( );
         // set flag to refect the change
         init_specified = true;
     }
     else if( init_specified == true && goal_specified == false)
     {
         //set the goal pose center of mass
-        m_simulator.SetGoalCenter(mouse_x, mouse_y, M_PI);
+        //m_simulator.SetGoalCenter(mouse_x, mouse_y, M_PI); 10 , -8
+        m_simulator.SetGoalCenter( 10 ,-8, M_PI);
         //setting the first vertex
         m_simulator.goal_triangle.vertices[0] = m_simulator.goal_triangle.com + glm::vec2( -0.5, 1.0 );
         //setting the second vertex
@@ -187,9 +195,18 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
         SetGoalPose( );
         // set flag to refect the change
         goal_specified = true;
-        m_planner->CalcluateRadiusFunction( );
+      /*  printf(" v0 = [  %f  %f  ] v1 = [ %f  %f  ] v2 = [ %f  %f  ]\n" ,m_simulator.goal_triangle.vertices[0][0],
+                m_simulator.goal_triangle.vertices[0][1], m_simulator.goal_triangle.vertices[1][0], m_simulator.goal_triangle.vertices[1][1],
+                m_simulator.goal_triangle.vertices[2][0], m_simulator.goal_triangle.vertices[2][1]);
+        printf(" com x = %f , Com y = %f \n",m_simulator.goal_triangle.com[0], m_simulator.goal_triangle.com[1] ); */
         m_planner->SetTotalOrientationChange( );
+        m_planner->PlanerPoseProblem::populatePushes( );
+        m_planner->GetMaxReorientAngle( );
+        m_planner->SetTotalOrientationChange( );
+        m_planner->SetStepAngle( );
+        //m_planner->CalcluateRadiusFunction( );
         m_planner->SetUnitReorientPushes( );
+        m_planner->CalculatePeshkinDistance( );
     }
     else
     {
@@ -298,7 +315,7 @@ void Graphics::CallbackEventOnTimer(int id)
     if(m_graphics)
     {
         m_graphics->HandleEventOnTimer();
-        glutTimerFunc(15, CallbackEventOnTimer, id);
+        glutTimerFunc(120, CallbackEventOnTimer, id);
         glutPostRedisplay();
     }
 }

@@ -181,16 +181,35 @@ protected:
     Triangle curr_triangle;
 
     std::vector<float> local_minima;
+    // holds the maximum reorient angle in 0->CW 1->CCW
     glm::vec2 e1_max_angle;
-    glm::vec2 delta_angle;
+    glm::vec2 delta_angle;  // net reorientation reguired to get to goal
     glm::vec2 step_angle;
+    
+    glm::vec2 max_reorient_angles;
+    std::vector<glm::vec2> edge_vectors;
+    std::vector<glm::vec2> edge_com_vectors;
 
     std::vector<glm::vec2> unit_reorient_CW;
     std::vector<glm::vec2> unit_reorient_CCW;
+    
+    int num_reorient_CW;
+    int num_reorient_CCW;
+
+    std::vector<float> peshkin_CW;
+    std::vector<float> peshkin_CCW;
 
     std::vector<float> mag_reorient_CW;
     std::vector<float> mag_reorient_CCW;
     
+    std::vector<glm::vec2> unit_pushes_CW;
+    std::vector<glm::vec2> unit_pushes_CCW;
+    
+    std::vector<float> magnitudes_CW;
+    std::vector<float> magnitudes_CCW;
+
+    int push_index;
+
     friend class Graphics;
     friend class PlanerPoseProblem;
     

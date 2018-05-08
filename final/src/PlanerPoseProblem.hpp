@@ -50,16 +50,22 @@ public:
      */
     ~PlanerPoseProblem(void);
     
+    void SetStepAngle(void);
+    void SetEdgeVectors(void);
+    void GetMaxReorientAngle(void);
     void CalcluateRadiusFunction(void);
+    float AngleBetweenVectors( glm::vec2 v1, glm::vec2 v2 );
+    void CalculatePeshkinDistance(void);
     void SetTotalOrientationChange(void);
     void SetUnitReorientPushes(void);
+    void populatePushes(void);
 
     /**
      *@brief Select the appropriate move so that the polygon behaves
      *       as described in the planer pose problem
      *@param CW_rotation the desired rotations should be Clockwise
      */
-    Move PPPAlgorithm( bool CW_rotation );
+    Move PPPAlgorithm( bool CW_rotation);
 
 
     
