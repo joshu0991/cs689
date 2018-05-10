@@ -205,10 +205,22 @@ protected:
     std::vector<glm::vec2> unit_pushes_CW;
     std::vector<glm::vec2> unit_pushes_CCW;
     
+    std::vector<glm::vec2> Cis_CW;
+    std::vector<glm::vec2> Cis_CCW;
+    
     std::vector<float> magnitudes_CW;
     std::vector<float> magnitudes_CCW;
+    
+    std::vector<glm::mat3> ni_CW;
+    std::vector<glm::mat3> ni_CCW;
+    
+    std::vector<glm::vec2> v0_coord;
+    std::vector<glm::vec2> v1_coord;
+    std::vector<glm::vec2> v2_coord;
 
+    std::vector<glm::vec2> com_coord;
     int push_index;
+    int reorient_index;
 
     friend class Graphics;
     friend class PlanerPoseProblem;

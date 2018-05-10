@@ -82,17 +82,23 @@ void Graphics::HandleEventOnTimer(void)
         if(m_run && !m_simulator.HasPolygonReachedGoal())
         {
             // get the move
-            struct Move move = m_planner->PPPAlgorithm(CW_rotation);
+            //struct Move move = m_planner->PPPAlgorithm(CW_rotation);
             
             //setting the center of mass and the theta based of the new move
-            m_simulator.SetCurrCOM(m_simulator.GetCurrCenterOfMass()[0] +
+            /*m_simulator.SetCurrCOM(m_simulator.GetCurrCenterOfMass()[0] +
                                    move.m_dx,
                                    m_simulator.GetCurrCenterOfMass()[1] +
                                    move.m_dy);
             m_simulator.SetCurrTheta(m_simulator.GetCurrtheta() + move.m_dtheta);
             
             m_simulator.SetVertices(move.m_dx, move.m_dy);
-            
+            */
+            m_simulator.SetCurrCOM( m_simulator.com_coord[m_simulator.push_index][0],
+                                    m_simulator.com_coord[m_simulator.push_index][1] );
+            m_simulator.curr_triangle.vertices[0] = m_simulator.v0_coord[m_simulator.push_index];
+            m_simulator.curr_triangle.vertices[1] = m_simulator.v1_coord[m_simulator.push_index];
+            m_simulator.curr_triangle.vertices[2] = m_simulator.v2_coord[m_simulator.push_index];
+            m_simulator.push_index++;
             if(m_exportFrames)
                 ExportFrameAsImage();
             
@@ -150,12 +156,12 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
     if( init_specified == false && goal_specified == false )
     {
         //set the init pose center of mass
-        //m_simulator.SetCurrCOM(mouse_x,mouse_y);
-        m_simulator.SetCurrCOM(-9,7);
+        m_simulator.SetCurrCOM(mouse_x,mouse_y);
+        //m_simulator.SetCurrCOM(-9,7);
         
-        //m_simulator.init_triangle.com = glm::vec2( mouse_x, mouse_y );
-        m_simulator.init_triangle.com = glm::vec2(-9,7);
-       m_simulator.init_triangle.theta = 3 * M_PI/2;
+        m_simulator.init_triangle.com = glm::vec2( mouse_x, mouse_y );
+        //m_simulator.init_triangle.com = glm::vec2(-9,7);
+       m_simulator.init_triangle.theta = 3*M_PI/2;
         
         /* set the vertices V1 = (-1,0) V2 = (2.5,0) V3 = (0,1.5)
          * using COM = (0.5,0.5)
@@ -183,8 +189,8 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
     else if( init_specified == true && goal_specified == false)
     {
         //set the goal pose center of mass
-        //m_simulator.SetGoalCenter(mouse_x, mouse_y, M_PI); 10 , -8
-        m_simulator.SetGoalCenter( 10 ,-8, M_PI);
+        m_simulator.SetGoalCenter(mouse_x, mouse_y, M_PI); 
+        //m_simulator.SetGoalCenter( 10 , -8, M_PI);
         //setting the first vertex
         m_simulator.goal_triangle.vertices[0] = m_simulator.goal_triangle.com + glm::vec2( -0.5, 1.0 );
         //setting the second vertex
@@ -200,13 +206,18 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
                 m_simulator.goal_triangle.vertices[2][0], m_simulator.goal_triangle.vertices[2][1]);
         printf(" com x = %f , Com y = %f \n",m_simulator.goal_triangle.com[0], m_simulator.goal_triangle.com[1] ); */
         m_planner->SetTotalOrientationChange( );
-        m_planner->PlanerPoseProblem::populatePushes( );
         m_planner->GetMaxReorientAngle( );
         m_planner->SetTotalOrientationChange( );
         m_planner->SetStepAngle( );
         //m_planner->CalcluateRadiusFunction( );
         m_planner->SetUnitReorientPushes( );
         m_planner->CalculatePeshkinDistance( );
+        m_planner->CalculateCis( );
+        m_planner->CalculateUnitNormals( );
+        m_planner->LPSolutionCW( );
+        m_planner->LPSolutionCCW( );
+        //m_planner->PlanerPoseProblem::populatePushes( );
+        m_planner->ProduceMoves( );
     }
     else
     {

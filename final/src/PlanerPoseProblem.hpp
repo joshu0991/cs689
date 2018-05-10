@@ -25,6 +25,7 @@ struct Move
     float m_dx;
     float m_dy;
     float m_dtheta;
+    glm::vec2 axis_of_rotation;
 };
 
 
@@ -53,19 +54,18 @@ public:
     void SetStepAngle(void);
     void SetEdgeVectors(void);
     void GetMaxReorientAngle(void);
-    void CalcluateRadiusFunction(void);
     float AngleBetweenVectors( glm::vec2 v1, glm::vec2 v2 );
+    glm::mat2 GetRotationMatrix( float angle, bool CW );
+    void CalculateCis(void);
     void CalculatePeshkinDistance(void);
     void SetTotalOrientationChange(void);
     void SetUnitReorientPushes(void);
     void populatePushes(void);
+    void CalculateUnitNormals(void);
+    void LPSolutionCW(void);
+    void LPSolutionCCW(void);
+    void ProduceMoves(void);
 
-    /**
-     *@brief Select the appropriate move so that the polygon behaves
-     *       as described in the planer pose problem
-     *@param CW_rotation the desired rotations should be Clockwise
-     */
-    Move PPPAlgorithm( bool CW_rotation);
 
 
     

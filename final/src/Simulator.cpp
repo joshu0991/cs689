@@ -31,7 +31,7 @@ Simulator::Simulator( )
     curr_triangle.theta = 0.0;
 
     push_index = 0;
-
+    reorient_index = 0;
     for( int i = 0 ; i < 6 ; ++i )
     {
         local_minima.push_back(0.0);
