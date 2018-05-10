@@ -202,8 +202,6 @@ protected:
     std::vector<float> mag_reorient_CW;
     std::vector<float> mag_reorient_CCW;
     
-    std::vector<glm::vec2> unit_pushes_CW;
-    std::vector<glm::vec2> unit_pushes_CCW;
     
     std::vector<glm::vec2> Cis_CW;
     std::vector<glm::vec2> Cis_CCW;

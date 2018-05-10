@@ -60,11 +60,11 @@ public:
     void CalculatePeshkinDistance(void);
     void SetTotalOrientationChange(void);
     void SetUnitReorientPushes(void);
-    void populatePushes(void);
     void CalculateUnitNormals(void);
     void LPSolutionCW(void);
     void LPSolutionCCW(void);
-    void ProduceMoves(void);
+    void ProduceMovesCW(void);
+    void ProduceMovesCCW(void);
 
 
 

@@ -217,7 +217,14 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
         m_planner->LPSolutionCW( );
         m_planner->LPSolutionCCW( );
         //m_planner->PlanerPoseProblem::populatePushes( );
-        m_planner->ProduceMoves( );
+        if( CW_rotation )
+        {
+            m_planner->ProduceMovesCW( );
+        }
+        else
+        {
+            m_planner->ProduceMovesCCW( );
+        }
     }
     else
     {
