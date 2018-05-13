@@ -22,6 +22,8 @@ Graphics::Graphics(void)
     init_specified = false;
     goal_specified = false;
     CW_rotation = true;
+    init_rot_angle = 0.0;
+    goal_rot_angle = 0.0;
     
     m_frames = 0;
     m_exportFrames = 0;
@@ -46,8 +48,8 @@ void Graphics::MainLoop(void)
     char  *args = (char*)"args";
     glutInit(&argc, &args);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-    glutInitWindowSize(600, 400);
-    glutInitWindowPosition(0, 0);
+    glutInitWindowSize(900, 600);
+    glutInitWindowPosition(900, 0);
     glutCreateWindow("Polygon Pushing Algorithm");
     
     
@@ -161,7 +163,8 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
         
         m_simulator.init_triangle.com = glm::vec2( mouse_x, mouse_y );
         //m_simulator.init_triangle.com = glm::vec2(-9,7);
-       m_simulator.init_triangle.theta = 3*M_PI/2;
+       //m_simulator.init_triangle.theta = 3*M_PI/2;
+        m_simulator.init_triangle.theta = init_rot_angle * M_PI;
         
         /* set the vertices V1 = (-1,0) V2 = (2.5,0) V3 = (0,1.5)
          * using COM = (0.5,0.5)
@@ -189,7 +192,7 @@ void Graphics::HandleEventInitGoalPose( double mouse_x, double mouse_y )
     else if( init_specified == true && goal_specified == false)
     {
         //set the goal pose center of mass
-        m_simulator.SetGoalCenter(mouse_x, mouse_y, M_PI); 
+        m_simulator.SetGoalCenter(mouse_x, mouse_y, goal_rot_angle * M_PI); 
         //m_simulator.SetGoalCenter( 10 , -8, M_PI);
         //setting the first vertex
         m_simulator.goal_triangle.vertices[0] = m_simulator.goal_triangle.com + glm::vec2( -0.5, 1.0 );
@@ -413,9 +416,9 @@ void Graphics::ExportFrameAsImage(const char fname[])
 
 int main(int argc, char **argv)
 {
-    if( argc != 2 )
+    if( argc != 4 )
     {
-        printf("PlanerPoseProblem <1 for CW / 0 for CCW>\n");
+        printf("PlanerPoseProblem <1 for CW / 0 for CCW> <initial reorientation> <final reorientation>\n");
         exit(0);
     } 
     
@@ -424,6 +427,9 @@ int main(int argc, char **argv)
     {
         graphics.CW_rotation = false;
     }
+    sscanf( argv[2], "%f", &graphics.init_rot_angle );
+    sscanf( argv[3], "%f", &graphics.goal_rot_angle );
+    
     graphics.MainLoop();
     
     return 0;

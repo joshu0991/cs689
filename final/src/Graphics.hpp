@@ -30,6 +30,8 @@ public:
     void MainLoop(void);
     
     bool CW_rotation;
+    float init_rot_angle;
+    float goal_rot_angle;
 protected:
     /**
      *@brief Perform simulation step

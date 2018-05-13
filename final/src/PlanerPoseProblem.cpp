@@ -516,8 +516,6 @@ void PlanerPoseProblem::LPSolutionCW( )
             col_name_a[1] = '0' + (i/10);
             col_name_a[2] = '0' + (i%10);
         }
-    printf(" %s\n", col_name_a);
-    printf(" %d \n", 3*i);
         // assigns the symbolic name a00_0 to the column variable
         glp_set_col_name( lp, 3*i+1, col_name_a );
         // sets the type and bounds of the column GLP_LO means that the column has a lower bound
@@ -527,7 +525,6 @@ void PlanerPoseProblem::LPSolutionCW( )
             
         // ai2
         col_name_a[4] = '2';
-    printf(" %s\n", col_name_a);
         glp_set_col_name( lp, 3*i+2, col_name_a );
         // sets the type and bounds of the column GLP_LO means that the column has a lower bound
         glp_set_col_bnds( lp, 3*i+2, GLP_LO, 0.0, 0.0 );
@@ -536,7 +533,6 @@ void PlanerPoseProblem::LPSolutionCW( )
 
         // ai3
         col_name_a[4] = '3';
-    printf(" %s\n", col_name_a);
         glp_set_col_name( lp, 3*i+3, col_name_a );
         // sets the type and bounds of the column GLP_LO means that the column has a lower bound
         glp_set_col_bnds( lp, 3*i+3, GLP_LO, 0.0, 0.0 );
@@ -546,7 +542,6 @@ void PlanerPoseProblem::LPSolutionCW( )
     }
     
     i = 3 * i + 1;
-    printf(" %d \n", i);
 
     for( int j = 0 ; j < m_simulator->num_reorient_CW  ; ++j )
     {
@@ -560,7 +555,6 @@ void PlanerPoseProblem::LPSolutionCW( )
             col_name_b[1] = '0' + ((j+1)/10);
             col_name_b[2] = '0' + ((j+1)%10);
         }
-        printf(" %s \n", col_name_b);
         // assigns the symbolic name a00_0 to the column variable
         glp_set_col_name( lp, i, col_name_b );
         // sets the type and bounds of the column GLP_LO means that the column has a lower bound
@@ -582,17 +576,14 @@ void PlanerPoseProblem::LPSolutionCW( )
         ia[3*i+1] = 1;
         ja[3*i+1] = 3*i+1;
         ar[3*i+1] = coefficients1_aij[i][0];
-        printf(" ia %d = 1 , ja %d = %d , ar %d = %f\n", 3*i+1, 3*i+1, 3*i+1, 3*i+1, coefficients1_aij[i][0]);
 
         ia[3*i+2] = 1;
         ja[3*i+2] = 3*i+2;
         ar[3*i+2] = coefficients1_aij[i][1];
-        printf(" ia %d = 1 , ja %d = %d , ar %d = %f\n", 3*i+2, 3*i+2, 3*i+2, 3*i+2, coefficients1_aij[i][1]);
 
         ia[3*i+3] = 1;
         ja[3*i+3] = 3*i+3;
         ar[3*i+3] = coefficients1_aij[i][2];
-        printf(" ia %d = 1 , ja %d = %d , ar %d = %f\n", 3*i+3, 3*i+3, 3*i+3, 3*i+3, coefficients1_aij[i][2]);
         
     }
 
@@ -602,12 +593,10 @@ void PlanerPoseProblem::LPSolutionCW( )
         ia[i] = 1;
         ja[i] = i;
         ar[i] = coefficients1_bi[j]; 
-        printf(" ia %d = 1 , ja %d = %d , ar %d = %f\n", i, i, i, i, coefficients1_bi[j]);
         i++;
     }
     
     i--;
-    printf("i--  %d\n", i); 
     int j = 0;
     // second constraint 
     for(j = 0 ; j < m_simulator->num_reorient_CW+1 ; ++j)
@@ -615,29 +604,24 @@ void PlanerPoseProblem::LPSolutionCW( )
         ia[i+1] = 2;
         ja[i+1] = 3*j+1;
         ar[i+1] = coefficients2_aij[j][0];
-        printf(" ia %d = 2 , ja %d = %d , ar %d = %f\n", i+1, i+1, 3*j+1, i+1, coefficients2_aij[j][0]);
 
         ia[i+2] = 2;
         ja[i+2] = 3*j+2;
         ar[i+2] = coefficients2_aij[j][1];
-        printf(" ia %d = 2 , ja %d = %d , ar %d = %f\n", i+2, i+2, 3*j+2, i+2, coefficients2_aij[j][1]);
 
         ia[i+3] = 2;
         ja[i+3] = 3*j+3;
         ar[i+3] = coefficients2_aij[j][2];
-        printf(" ia %d = 2 , ja %d = %d , ar %d = %f\n", i+3, i+3, 3*j+3, i+3, coefficients2_aij[j][2]);
         
         i+=3;
     }
     i++;
-    printf(" i++ %d\n",i );
     j = 3*j + 1;
     for(int k = 0 ; k < m_simulator->num_reorient_CW ; ++k)
     {
         ia[i] = 2;
         ja[i] = j;
         ar[i] = coefficients2_bi[k];
-        printf(" ia %d = 2 , ja %d = %d , ar %d = %f\n", i, i, j, i, coefficients2_bi[k]);
         j++;
         i++;
     }
@@ -658,7 +642,7 @@ void PlanerPoseProblem::LPSolutionCW( )
     for( i = 1 ; i <= num_col ; ++i )
     {
         m_simulator->magnitudes_CW.push_back( glp_get_col_prim( lp, i ) );
-        printf(" magnitude of pushes %d = %f \n",i , m_simulator->magnitudes_CW[i-1]);
+        printf("CW magnitude of push %d = %f \n",i , m_simulator->magnitudes_CW[i-1]);
     }
 
     //frees all the memory allocated to the problem object
@@ -771,8 +755,6 @@ void PlanerPoseProblem::LPSolutionCCW( )
             col_name_a[1] = '0' + (i/10);
             col_name_a[2] = '0' + (i%10);
         }
-    printf(" %s\n", col_name_a);
-    printf(" %d \n", 3*i);
         // assigns the symbolic name a00_0 to the column variable
         glp_set_col_name( lp, 3*i+1, col_name_a );
         // sets the type and bounds of the column GLP_LO means that the column has a lower bound
@@ -782,7 +764,6 @@ void PlanerPoseProblem::LPSolutionCCW( )
             
         // ai2
         col_name_a[4] = '2';
-    printf(" %s\n", col_name_a);
         glp_set_col_name( lp, 3*i+2, col_name_a );
         // sets the type and bounds of the column GLP_LO means that the column has a lower bound
         glp_set_col_bnds( lp, 3*i+2, GLP_LO, 0.0, 0.0 );
@@ -791,7 +772,6 @@ void PlanerPoseProblem::LPSolutionCCW( )
 
         // ai3
         col_name_a[4] = '3';
-    printf(" %s\n", col_name_a);
         glp_set_col_name( lp, 3*i+3, col_name_a );
         // sets the type and bounds of the column GLP_LO means that the column has a lower bound
         glp_set_col_bnds( lp, 3*i+3, GLP_LO, 0.0, 0.0 );
@@ -801,7 +781,6 @@ void PlanerPoseProblem::LPSolutionCCW( )
     }
     
     i = 3 * i + 1;
-    printf(" %d \n", i);
 
     for( int j = 0 ; j < m_simulator->num_reorient_CCW  ; ++j )
     {
@@ -815,7 +794,6 @@ void PlanerPoseProblem::LPSolutionCCW( )
             col_name_b[1] = '0' + ((j+1)/10);
             col_name_b[2] = '0' + ((j+1)%10);
         }
-        printf(" %s \n", col_name_b);
         // assigns the symbolic name a00_0 to the column variable
         glp_set_col_name( lp, i, col_name_b );
         // sets the type and bounds of the column GLP_LO means that the column has a lower bound
@@ -837,17 +815,14 @@ void PlanerPoseProblem::LPSolutionCCW( )
         ia[3*i+1] = 1;
         ja[3*i+1] = 3*i+1;
         ar[3*i+1] = coefficients1_aij[i][0];
-        printf(" ia %d = 1 , ja %d = %d , ar %d = %f\n", 3*i+1, 3*i+1, 3*i+1, 3*i+1, coefficients1_aij[i][0]);
 
         ia[3*i+2] = 1;
         ja[3*i+2] = 3*i+2;
         ar[3*i+2] = coefficients1_aij[i][1];
-        printf(" ia %d = 1 , ja %d = %d , ar %d = %f\n", 3*i+2, 3*i+2, 3*i+2, 3*i+2, coefficients1_aij[i][1]);
 
         ia[3*i+3] = 1;
         ja[3*i+3] = 3*i+3;
         ar[3*i+3] = coefficients1_aij[i][2];
-        printf(" ia %d = 1 , ja %d = %d , ar %d = %f\n", 3*i+3, 3*i+3, 3*i+3, 3*i+3, coefficients1_aij[i][2]);
         
     }
 
@@ -857,12 +832,10 @@ void PlanerPoseProblem::LPSolutionCCW( )
         ia[i] = 1;
         ja[i] = i;
         ar[i] = coefficients1_bi[j]; 
-        printf(" ia %d = 1 , ja %d = %d , ar %d = %f\n", i, i, i, i, coefficients1_bi[j]);
         i++;
     }
     
     i--;
-    printf("i--  %d\n", i); 
     int j = 0;
     // second constraint 
     for(j = 0 ; j < m_simulator->num_reorient_CCW+1 ; ++j)
@@ -870,29 +843,24 @@ void PlanerPoseProblem::LPSolutionCCW( )
         ia[i+1] = 2;
         ja[i+1] = 3*j+1;
         ar[i+1] = coefficients2_aij[j][0];
-        printf(" ia %d = 2 , ja %d = %d , ar %d = %f\n", i+1, i+1, 3*j+1, i+1, coefficients2_aij[j][0]);
 
         ia[i+2] = 2;
         ja[i+2] = 3*j+2;
         ar[i+2] = coefficients2_aij[j][1];
-        printf(" ia %d = 2 , ja %d = %d , ar %d = %f\n", i+2, i+2, 3*j+2, i+2, coefficients2_aij[j][1]);
 
         ia[i+3] = 2;
         ja[i+3] = 3*j+3;
         ar[i+3] = coefficients2_aij[j][2];
-        printf(" ia %d = 2 , ja %d = %d , ar %d = %f\n", i+3, i+3, 3*j+3, i+3, coefficients2_aij[j][2]);
         
         i+=3;
     }
     i++;
-    printf(" i++ %d\n",i );
     j = 3*j + 1;
     for(int k = 0 ; k < m_simulator->num_reorient_CCW ; ++k)
     {
         ia[i] = 2;
         ja[i] = j;
         ar[i] = coefficients2_bi[k];
-        printf(" ia %d = 2 , ja %d = %d , ar %d = %f\n", i, i, j, i, coefficients2_bi[k]);
         j++;
         i++;
     }
@@ -913,7 +881,7 @@ void PlanerPoseProblem::LPSolutionCCW( )
     for( i = 1 ; i <= num_col ; ++i )
     {
         m_simulator->magnitudes_CCW.push_back( glp_get_col_prim( lp, i ) );
-        printf(" magnitude of pushes %d = %f \n",i , m_simulator->magnitudes_CCW[i-1]);
+        printf("CCW magnitude of push %d = %f \n",i , m_simulator->magnitudes_CCW[i-1]);
     }
 
     //frees all the memory allocated to the problem object
